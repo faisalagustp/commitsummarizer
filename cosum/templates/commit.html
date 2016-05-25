@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block breadcumb %}
+<div class="ui breadcrumb">
+   <a class="section" href="/"><i class="home icon"></i> Home</a>
+   <i class="right angle icon divider"></i>
+   <a class="active section">{{ project }}</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="sixteen wide column">
+    <h4 class="ui horizontal divider header">
+      <i class="tasks icon"></i>Detail Of: {{ project }}
+    </h4>
+    <div class="ui celled list">
+      {% for commit in commits %}
+      <div class="item">
+        <i class="large github middle aligned icon"></i>
+        <div class="content">
+          <a class="header commitnya link" href="/detail/{{ commit.id }}" data-content="Summarizenya: {{ commit.generated_comment }}" data-variation="wide">{{ commit.message }}</a>
+          ({{ commit.hashnya }}) oleh {{ commit.commiter }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

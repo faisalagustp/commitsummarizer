@@ -1,0 +1,79 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/static/asset/css/semantic.min.css">
+        <link rel="stylesheet" type="text/css" href="/static/dist/diff2html.css">
+        <script src="/static/asset/js/jquery.min.js"></script>
+        <script src="/static/asset/js/semantic.min.js"></script>
+
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/androidstudio.min.css">
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
+
+        <title>Commit Summarization</title>
+        <script>
+        $(document).ready(function() {
+          $("#cardloading").hide();
+          $('.commitnya.link').popup();
+
+          $('.crawlgit').click(function(){
+            usernamenya = $("#username").val();
+            projectnya = $("#project").val();
+            csrf = $('input[type=hidden]').val();
+
+            $("#projectloading").html(usernamenya+"/"+projectnya);
+            $("#cardloading").show("slow");
+
+            $.post("/import/",
+            {
+                username: usernamenya,
+                project: projectnya,
+                csrfmiddlewaretoken : csrf
+            },
+            function(data, status){
+              if(status=="success"){
+                if (data == "gagal"){
+                  $("#aldes").html("Gagal Mengakses Repository");
+                  $('.small.modal').modal('show');
+                  $("#cardloading").hide("slow");
+                }else{
+                  $("#aldes").html("Repository berhasil ditambahkan");
+                  $('.small.modal').modal({
+                    closable  : false,
+                    onDeny    : function(){
+                      location.reload();
+                      return false;
+                    }
+                  })
+                  .modal('show');
+                }
+              }else{
+                $("#aldes").html("Cek Kembali Koneksi Anda, Repository tidak dapat diakses");
+                $('.small.modal').modal('show');
+                $("#cardloading").hide("slow");
+              }
+            });
+
+          });
+        });
+        </script>
+    </head>
+    <body>
+         <br/>
+         <h1 align="center">Commit Summarization</h1><br/>
+         <div class="ui grid container">
+           {% block breadcumb %}{% endblock %}
+           {% block content %}{% endblock %}
+         </div>
+
+         <div class="ui small modal">
+           <div class="header">Peringatan</div>
+           <div class="content">
+               <div class="description" id="aldes">
+             </div>
+           </div>
+           <div class="actions">
+              <div class="ui blue cancel button">OK</div>
+            </div>
+         </div>
+     </body>
+</html>

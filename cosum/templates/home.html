@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block breadcumb %}
+<div class="ui breadcrumb">
+   <a class="active section"><i class="home icon"></i> Home</a>
+</div>
+{% endblock %}
+{% block content %}
+          <div class="row">
+            <div class="sixteen wide column">
+              <h4 class="ui horizontal divider header">
+                <i class="add icon"></i>
+                Add Repository to analyzed
+              </h4>
+                <div class="ui fluid labeled action input">
+                   <div class="ui label">
+                     http://github.com/
+                   </div>
+                   <input name="username" id="username" placeholder="username" />
+                   <div class="ui tag label">
+                     /
+                   </div>
+                   <input name="project" id="project" placeholder="project" />
+                   <button name="add_item" class="ui button crawlgit">Add</button>
+                </div>
+                {% csrf_token %}
+            </div>
+          </div>
+          <div class="row">
+            <div class="sixteen wide column">
+              <h4 class="ui horizontal divider header">
+                <i class="list icon"></i>
+                Available Repository
+              </h4>
+              <div class="ui link cards">
+                {% for commit in commits %}
+                <div class="card">
+                  <div class="content">
+                    <div class="header">{{ commit.nama_project }}</div>
+                    <div class="meta">
+                      <a>Github Repository</a>
+                    </div>
+                    <div class="description">
+                      Repository ini terdiri dari sekian commit
+                    </div>
+                  </div>
+                  <div class="extra content">
+                    <div class="ui buttons">
+                      <a class="ui blue button" target="blank" href="/commit/?project={% autoescape on %}{{ commit.nama_project|safe }}{% endautoescape %}"><i class="eye icon"></i>Summarize</a>
+                      <div class="or"></div>
+                      <a class="ui green button" target="blank" href="https://github.com/{{ commit.nama_project|safe }}"><i class="github icon"></i>In Github</a>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+                <div class="card" id="cardloading">
+                  <div class="ui active dimmer">
+                    <div class="ui text loader">Loading</div>
+                  </div>
+                  <div class="content">
+                    <div class="header" id="projectloading">Testing</div>
+                    <div class="meta">
+                      <a>Loading</a>
+                    </div>
+                    <div class="description">
+                      Loading
+                    </div>
+                  </div>
+                  <div class="extra content">
+                    <div class="ui buttons">
+                      <a class="ui blue button" target="blank" href=""><i class="eye icon"></i>Summarize</a>
+                      <div class="or"></div>
+                      <a class="ui green button" target="blank" href=""><i class="github icon"></i>In Github</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+{% endblock %}

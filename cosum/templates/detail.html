@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block breadcumb %}
+<div class="ui breadcrumb">
+   <a class="section" href="/"><i class="home icon"></i> Home</a>
+   <i class="right angle icon divider"></i>
+   <a class="section" href="/commit?project={{ commit.nama_project }}">{{ commit.nama_project }}</a>
+   <i class="right angle icon divider"></i>
+   <a class="section">{{ commit.hashnya }}</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="sixteen wide column">
+    <h4 class="ui horizontal divider header">
+      <i class="tasks icon"></i>Detail Of: {{ commit.message }}
+    </h4>
+    Ringkasan perubahan kode:<br/>
+    <pre style="white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap;white-space: -o-pre-wrap;word-wrap: break-word;">{{ commit.generated_comment }}</pre>
+
+      {% for file in files %}
+         File {{ file.filename }} <b>{{file.status}}</b><br/>
+         <pre><code>{{ file.perubahan }}</code></pre><br/>
+      {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
