@@ -19,8 +19,8 @@
       <div class="item">
         <i class="large github middle aligned icon"></i>
         <div class="content">
-          <a class="header commitnya link" href="/detail/{{ commit.id }}" data-content="Summarizenya: {{ commit.generated_comment }}" data-variation="wide">{{ commit.message }}</a>
-          ({{ commit.hashnya }}) oleh {{ commit.commiter }}
+          <a class="header commitnya link" href="/detail/{{ commit.id }}" data-content="{{ commit.generated_comment }}" data-variation="wide">{{ commit.message }}</a>
+          ({{ commit.hashnya }}) oleh {{ commit.commiter }} | Perubahan pada {{ commit.jumlahFile }} buah file
         </div>
       </div>
       {% endfor %}

@@ -34,15 +34,14 @@ def commit_page(request):
         if "" == "":
             files = Files.objects.filter(commit_id=commit.id)
             c = analyzeChange()
-            kata = ""
+            commit.jumlahFile = len(files)
             for berkas in files:
-                kata += "a"
                 c.submitFile([berkas.filename,berkas.status,berkas.perubahan])
 
             c.analyzePyChange()
             c.calculateCommitStereotype()
 
-            commit.generated_comment = c.generateCommitMessage()
+            commit.generated_comment = c.generateCommitMessage("brief")
 
     return render(request, 'commit.html',{'project':project, 'commits':commits})
 
@@ -57,7 +56,9 @@ def detail_page(request,commit_id):
     c.analyzePyChange()
     c.calculateCommitStereotype()
 
-    commit.generated_comment = c.generateCommitMessage()
+    commit.generated_comment = c.generateCommitMessage("all")
+    commit.generated_tfidf = c.generateCommitMessage("tfidf")
+    commit.generated_tfidfmessage = c.generateCommitMessage("tfidfmessage",commit.message)
     commit.save()
 
 

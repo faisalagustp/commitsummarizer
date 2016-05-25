@@ -14,21 +14,25 @@
 <div class="row">
   <div class="sixteen wide column">
     <h4 class="ui horizontal divider header">
-      <i class="tasks icon"></i>Detail Of: {{ commit.message }}
+      <i class="tasks icon"></i>Summarize of This Commit
     </h4>
-    Ringkasan perubahan kode:<br/>
     <div class="ui top attached tabular menu">
-      <div class="item active" data-tab="tab-1">Tab Name</div>
-      <div class="item" data-tab="tab-2">Tab Name 2</div>
+      <div class="item active" data-tab="tab-1">TFIDF + Keyword</div>
+      <div class="item" data-tab="tab-2">TFIDF</div>
+      <div class="item" data-tab="tab-3">All</div>
     </div>
     <div class="ui bottom attached active tab segment" data-tab="tab-1">
-      <pre style="white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap;white-space: -o-pre-wrap;word-wrap: break-word;">{{ commit.generated_comment }}</pre>
+      <pre style="white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap;white-space: -o-pre-wrap;word-wrap: break-word;">{{ commit.generated_tfidfmessage }}</pre>
     </div>
     <div class="ui bottom attached tab segment" data-tab="tab-2">
-      Ini Nih
+      <pre style="white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap;white-space: -o-pre-wrap;word-wrap: break-word;">{{ commit.generated_tfidf }}</pre>
     </div>
-    <hr/>
-
+    <div class="ui bottom attached tab segment" data-tab="tab-3">
+      <pre style="white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap;white-space: -o-pre-wrap;word-wrap: break-word;">{{ commit.generated_comment }}</pre>
+    </div>
+    <h4 class="ui horizontal divider header">
+      <i class="tasks icon"></i>Detail Of: {{ commit.message }}
+    </h4>
 
       {% for file in files %}
          File {{ file.filename }} <b>{{file.status}}</b><br/>

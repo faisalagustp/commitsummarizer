@@ -1,5 +1,10 @@
 from analyzePyCodeChange import analyzePyCodeChange
+from nltk.text import TextCollection
 from pprint import pprint
+from nltk.stem.porter import *
+from nltk.corpus import stopwords
+
+import re, math
 
 
 class analyzeChange():
@@ -9,6 +14,8 @@ class analyzeChange():
     confChange = {}
     xmlChange = {}
     pyChange = {}
+    daftarKata = {}
+    totalKalimat = 0
 
     methodSet = []
     methodGet = []
@@ -60,6 +67,7 @@ class analyzeChange():
             'modified' : [],
             'renamed' : []
         }
+        self.daftarKata = {}
 
         self.methodGet = []
         self.methodSet = []
@@ -73,6 +81,7 @@ class analyzeChange():
         self.mutatorMethodCount = 0
         self.importCount = 0
         self.classCount = 0
+        self.totalKalimat = 0
 
     def generateDetailClassOrMethod(self,objects):
         objects["name"] = objects["name"].replace("def","method")
@@ -97,40 +106,119 @@ class analyzeChange():
 
         return commitMessage
 
-    def generateMessageFromPy(self,change,noFile,jenis):
-        commitMessage = "\n" + str(noFile) + ". "+jenis+" File " + change[0] + "\n"
-        pprint(change)
+    def generateMessageFromPy(self,change,noFile,pesan,jenis):
+        commitMessage = "\n" + str(noFile) + ". "+pesan+" File " + change[0] + "\n"
         noLevel1 = 1
         #class yang ditambah
-        for imported in change[1][2]:
-            commitMessage += str(noFile) + "." + str(noLevel1) + ". "
-            commitMessage += "Penambahan" if imported["status"]=="+" else "Penghapusan"
-            commitMessage += " import kelas "
-            importing = imported["line"].split('import')
-            commitMessage += importing[-1]
-            if imported["line"].startswith("from"):
-                commitMessage += " dari module " + importing[0].replace("from","").strip()
-            commitMessage += "\n"
-            noLevel1 += 1
+        if jenis!= "top2":
+            for imported in change[1][2]:
+                commitMessage += str(noFile) + "." + str(noLevel1) + ". "
+                commitMessage += "Penambahan" if imported["status"]=="+" else "Penghapusan"
+                commitMessage += " import kelas "
+                importing = imported["line"].split('import')
+                commitMessage += importing[-1]
+                if imported["line"].startswith("from"):
+                    commitMessage += " dari module " + importing[0].replace("from","").strip()
+                commitMessage += "\n"
+                noLevel1 += 1
 
+        change[1][0] = sorted(change[1][0], key=lambda x: x["bobot"], reverse=True)
+        penandaKelas = 0
         for classes in change[1][0]:
-            commitMessage += str(noFile) + "." + str(noLevel1) + ". "
-            commitMessage += self.generateDetailClassOrMethod(classes)
-            noMethod = 1
-            for methods in classes["methods"]:
-                commitMessage += str(noFile) + "." + str(noLevel1) + "." + str(noMethod) + ". "
+            penandaKelas += 1
+            if (jenis=="top2" and penandaKelas<3) or jenis!="top2":
+                commitMessage += str(noFile) + "." + str(noLevel1) + ". "
+                commitMessage += self.generateDetailClassOrMethod(classes)
+                noMethod = 1
+                classes["methods"] = sorted(classes["methods"], key=lambda x: x["bobot"], reverse=True)
+                for methods in classes["methods"]:
+                    if (jenis=="top2" and noMethod < 3) or jenis!="top2":
+                        commitMessage += str(noFile) + "." + str(noLevel1) + "." + str(noMethod) + ". "
+                        commitMessage += self.generateDetailClassOrMethod(methods)
+                    noMethod += 1
+                noLevel1 += 1
+
+        #method yang ditambah
+        change[1][1] = sorted(change[1][1], key=lambda x: x["bobot"], reverse=True)
+        penandaMethod = 0
+        for methods in change[1][1]:
+            penandaMethod += 1
+            if (jenis=="top2" and penandaMethod < 3) or jenis!="top2":
+                commitMessage += str(noFile) + "." + str(noLevel1) + ". "
                 commitMessage += self.generateDetailClassOrMethod(methods)
-                noMethod += 1
-            noLevel1 += 1
+                noLevel1 += 1
+        return commitMessage
+
+    def preprocessText(self,kalimat):
+        kataPenting = ["def","from","import","class","(",")",".",",","or","and","_",":","self","get","set"]
+        for penting in kataPenting:
+            kalimat = kalimat.replace(penting," ")
+        kalimat = self.camelToNormal(kalimat)
+        return kalimat.strip()
+
+    def calculateFrequency(self,kalimat):
+        kalimat = self.preprocessText(kalimat)
+        stop = stopwords.words("english")
+        kalimat = [i for i in kalimat.split() if i not in stop]
+        self.totalKalimat += 1
+        pernah = []
+        stemmer = PorterStemmer()
+        for kata in kalimat:
+            kata = stemmer.stem(kata)
+            if len(kata)>3:
+                if kata in self.daftarKata:
+                    self.daftarKata[kata][0] += 1
+                    if kata not in pernah:
+                        self.daftarKata[kata][1] += 1
+                else:
+                    self.daftarKata[kata] = [1,1,0]
+
+            pernah.append(kata)
+
+    def calculateBobotKalimat(self,kalimat):
+        bobot = 0
+        kalimat = self.preprocessText(kalimat)
+        kalimat = kalimat.split(" ")
+        for kata in kalimat:
+            if kata in self.daftarKata:
+                bobot += self.daftarKata[kata][2]
+
+        return bobot
+
+    def camelToNormal(self,name):
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', name)
+        return re.sub('([a-z0-9])([A-Z])', r'\1 \2', s1).lower()
+
+    def calculateTFIDF(self):
+        for kata in self.daftarKata:
+            self.daftarKata[kata][2] = self.daftarKata[kata][0] / self.totalKalimat
+            self.daftarKata[kata][2] *= math.log(self.totalKalimat / self.daftarKata[kata][1])
+
+    def calculateFileScore(self,change,message):
+        stop = stopwords.words("english")
+        message = [i for i in message.split() if i not in stop]
+        stemmer = PorterStemmer()
+        for kata in message:
+            kata = stemmer.stem(kata)
+
+        fileScore = 0
+        for kelas in change[1][0]:
+            namaKelas = [i for i in kelas["name"].split() if i not in stop]
+            for kata in namaKelas:
+                if kata in message:
+                    fileScore += 0.5
+            fileScore += kelas["bobot"]
 
         #method yang ditambah
         for methods in change[1][1]:
-            commitMessage += str(noFile) + "." + str(noLevel1) + ". "
-            commitMessage += self.generateDetailClassOrMethod(methods)
-            noLevel1 += 1
-        return commitMessage
+            namaMethod = [i for i in methods["name"].split() if i not in stop]
+            for kata in namaMethod:
+                if kata in message:
+                    fileScore += 0.5
+            fileScore += methods["bobot"]
+        return fileScore
 
-    def generateCommitMessage(self):
+    def generateCommitMessage(self,jenis="all",message=""):
         dictionary = {
             "Structure" : "terdiri atas perubahan get dan set saja",
             "State Access" : "secara umum diisi oleh perubahan method accessor",
@@ -162,33 +250,65 @@ class analyzeChange():
         for stereotype in self.commitStereotypes:
             commitMessage += dictionary[stereotype] + ". "
 
+        if(jenis=="brief"):
+            return commitMessage
+
         if len(self.pyChange["added"]) + len(self.pyChange["removed"]) + len(self.pyChange["modified"]) + len(self.pyChange["renamed"]) > 0:
-            commitMessage+= "Detail perubahan yang terjadi adalah sebagai berikut:"
+            if jenis!= "all":
+                commitMessage+= "Detail perubahan penting dalam commii ini sebagai berikut:"
+            else:
+                commitMessage+= "Detail perubahan yang terjadi adalah sebagai berikut:"
 
         #addition
         noFile = 1
+
+
+        berkasses = []
         if len(self.pyChange["added"])>0:
             for change in self.pyChange["added"]:
-                commitMessage += self.generateMessageFromPy(change,noFile,"Penambahan")
-                noFile+=1
+                berkasses.append({
+                    "bobot file" : self.calculateFileScore(change,message),
+                    "file" : change,
+                    "message" : "Penambahan"
+                    })
 
-        #penghapusan
         if len(self.pyChange["removed"])>0:
             for change in self.pyChange["removed"]:
-                commitMessage += self.generateMessageFromPy(change,noFile,"Penghapusan")
-                noFile+=1
+                berkasses.append({
+                    "bobot file" : self.calculateFileScore(change,message),
+                    "file" : change,
+                    "message" : "Penghapusan"
+                    })
 
-        #Modifikasi
         if len(self.pyChange["modified"])>0:
             for change in self.pyChange["modified"]:
-                commitMessage += self.generateMessageFromPy(change,noFile,"Pada")
-                noFile+=1
+                berkasses.append({
+                    "bobot file" : self.calculateFileScore(change,message),
+                    "file" : change,
+                    "message" : "Perubahan pada"
+                    })
 
-        #Renaming
         if len(self.pyChange["renamed"])>0:
             for change in self.pyChange["renamed"]:
-                commitMessage += self.generateMessageFromPy(change,noFile,"Penggantian nama")
-                noFile+=1
+                berkasses.append({
+                    "bobot file" : self.calculateFileScore(change,message),
+                    "file" : change,
+                    "message" : "Perubahan Nama"
+                    })
+
+        if jenis=="all":
+            for files in berkasses:
+                commitMessage += self.generateMessageFromPy(files["file"],noFile,files["message"],jenis)
+                noFile += 1
+
+        elif jenis=="tfidf" or jenis=="tfidfmessage":
+            berkasses = sorted(berkasses, key=lambda x: x["bobot file"], reverse=True)
+            for files in berkasses:
+                if noFile < 4:
+                    commitMessage += self.generateMessageFromPy(files["file"],noFile,files["message"],"top2")
+                    noFile += 1
+
+
 
         commitMessage += "\n"
 
@@ -240,7 +360,6 @@ class analyzeChange():
 
         commitMessage += ("Terdapat perubahan pada " + str(self.miscFiles) + " buah file yang tidak dikenali.")   if self.miscFiles!= 0 else ""
         return commitMessage
-
 
     def calculateCommitStereotype(self):
         allMethod = self.getMethodCount + self.setMethodCount + self.accessorMethodCount + self.mutatorMethodCount
@@ -311,11 +430,14 @@ class analyzeChange():
             self.classCount += len(change[1][0])
             for val in change[1][0]:
                 for kelas in change[1][0]:
+                    self.calculateFrequency(kelas["name"])
                     for methods in kelas["methods"]:
+                        self.calculateFrequency(methods["name"])
                         self.checkMethod(methods)
 
             #methodRemoved
             for methods in change[1][1]:
+                self.calculateFrequency(methods["name"])
                 self.checkMethod(methods)
 
             #countRemoved
@@ -327,11 +449,14 @@ class analyzeChange():
             self.classCount += len(change[1][0])
             for val in change[1][0]:
                 for kelas in change[1][0]:
+                    self.calculateFrequency(kelas["name"])
                     for methods in kelas["methods"]:
+                        self.calculateFrequency(methods["name"])
                         self.checkMethod(methods)
 
             #methodRemoved
             for methods in change[1][1]:
+                self.calculateFrequency(methods["name"])
                 self.checkMethod(methods)
 
             #countRemoved
@@ -343,11 +468,14 @@ class analyzeChange():
             self.classCount += len(change[1][0])
             for val in change[1][0]:
                 for kelas in change[1][0]:
+                    self.calculateFrequency(kelas["name"])
                     for methods in kelas["methods"]:
+                        self.calculateFrequency(methods["name"])
                         self.checkMethod(methods)
 
             #methodRemoved
             for methods in change[1][1]:
+                self.calculateFrequency(methods["name"])
                 self.checkMethod(methods)
 
             #countRemoved
@@ -358,11 +486,14 @@ class analyzeChange():
             self.classCount += len(change[1][0])
             for val in change[1][0]:
                 for kelas in change[1][0]:
+                    self.calculateFrequency(kelas["name"])
                     for methods in kelas["methods"]:
+                        self.calculateFrequency(methods["name"])
                         self.checkMethod(methods)
 
             #methodRemoved
             for methods in change[1][1]:
+                self.calculateFrequency(methods["name"])
                 self.checkMethod(methods)
 
             #countRemoved
@@ -373,6 +504,29 @@ class analyzeChange():
             for gm in self.methodGet:
                 if gm == sm :
                     self.getSetMethodCount += 1
+
+        self.calculateTFIDF()
+        self.calculateBobotSemua("added")
+        self.calculateBobotSemua("removed")
+        self.calculateBobotSemua("modified")
+        self.calculateBobotSemua("renamed")
+
+    def calculateBobotSemua(self,tipe):
+        for change in self.pyChange[tipe]:
+            for val in change[1][0]:
+                for kelas in change[1][0]:
+                    kelas["bobot"] = self.calculateBobotKalimat(kelas["name"])
+                    counterMethod = 0
+                    for methods in kelas["methods"]:
+                        methods["bobot"] = self.calculateBobotKalimat(methods["name"])
+                        counterBobot = methods["bobot"]
+                    kelas["bobot"] += counterMethod
+
+
+            for methods in change[1][1]:
+                methods["bobot"] = self.calculateBobotKalimat(methods["name"])
+
+
 
     def checkMethod(self,methodnya):
         pureMethodName = methodnya["name"].replace("def ","").split("(")[0]
