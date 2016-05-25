@@ -17,10 +17,26 @@
     <div class="ui celled list">
       {% for commit in commits %}
       <div class="item">
-        <i class="large github middle aligned icon"></i>
+        <i class="large github middle aligned icon
+        {% if commit.senpos > commit.senneg %}
+          {% if commit.senpos < 2 %}
+            teal
+          {% else %}
+            blue
+          {% endif %}
+        {% elif commit.senpos == commit.senneg and commit.senneg == 0 %}
+        black
+        {% else %}
+          {% if commit.senneg < 2 %}
+            red
+          {% else %}
+            orange
+          {% endif %}
+        {% endif %}
+        "></i>
         <div class="content">
           <a class="header commitnya link" href="/detail/{{ commit.id }}" data-content="{{ commit.generated_comment }}" data-variation="wide">{{ commit.message }}</a>
-          ({{ commit.hashnya }}) oleh {{ commit.commiter }} | Perubahan pada {{ commit.jumlahFile }} buah file
+          ({{ commit.hashnya }}) oleh {{ commit.commiter }} | Perubahan pada {{ commit.jumlahFile }} buah file {{ commit.senpos }}:{{ commit.senneg }}
         </div>
       </div>
       {% endfor %}

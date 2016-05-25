@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from importer import Importer
 from analyzeChange import analyzeChange
 from analyzePyCodeChange import analyzePyCodeChange
+from sentiment import sentiMeter
 from cosum.models import Commit, Files
 
 
@@ -32,6 +33,11 @@ def commit_page(request):
     #melakukan looping untuk setiap commit
     for commit in commits:
         if "" == "":
+            sentiment = sentiMeter(commit.message)
+            besarSentiment = sentiment.countSentiStrength()
+            commit.senpos = besarSentiment[0]
+            commit.senneg = besarSentiment[1] * -1
+
             files = Files.objects.filter(commit_id=commit.id)
             c = analyzeChange()
             commit.jumlahFile = len(files)
