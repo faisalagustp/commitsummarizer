@@ -31,8 +31,8 @@
             },
             function(data, status){
               if(status=="success"){
-                if (data == "gagal"){
-                  $("#aldes").html("Gagal Mengakses Repository");
+                if (data != "sukses"){
+                  $("#aldes").html("Gagal Mengakses Repository "+data);
                   $('.small.modal').modal('show');
                   $("#cardloading").hide("slow");
                 }else{

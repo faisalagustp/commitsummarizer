@@ -1,3 +1,6 @@
+import urllib.request, json, pprint
+from cosum.models import Commit, Files
+
 class Importer:
     name = ""
     project = ""

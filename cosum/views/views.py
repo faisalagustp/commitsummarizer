@@ -1,11 +1,8 @@
 from django.shortcuts import render
-from cosum.models import Commit
 from django.http import HttpResponse
-import urllib.request, json, pprint
 from importer import Importer
 from analyzeChange import analyzeChange
 from analyzePyCodeChange import analyzePyCodeChange
-
 from cosum.models import Commit, Files
 
 
@@ -24,7 +21,7 @@ def import_page(request):
            importer = Importer(name,project)
            name = importer.crawl_git()
     except Exception as e:
-        kode = "gagal"
+        kode = str(e)
 
     return HttpResponse(kode)
 
