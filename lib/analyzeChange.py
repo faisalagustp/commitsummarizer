@@ -80,17 +80,26 @@ class analyzeChange():
         commitMessage = ""
         if objects["status"]=="+":
             commitMessage += "Penambahan " + objects["name"]
-        elif objects["status"]=="+":
+        elif objects["status"]=="-":
             commitMessage += "Penghapusan " + objects["name"]
         elif objects["status"]=="":
             commitMessage += "Modifikasi " + objects["name"]
         elif objects["status"]=="R":
             commitMessage += "Penggantian " + objects["replacing"] + " menjadi " + objects["name"]
-        commitMessage += " (" + str(objects["plus"]) +" baris ditambahkan dan "+ str(objects["minus"]) +" baris dihapus)\n"
+
+        if objects["status"]=="+":
+            commitMessage += " (" + str(objects["plus"]) +" baris ditambahkan)\n"
+        elif objects["status"]=="-":
+            commitMessage += " ("+ str(objects["minus"]) +" baris dihapus)\n"
+        else:
+            commitMessage += " (" + str(objects["plus"]) +" baris ditambahkan dan "+ str(objects["minus"]) +" baris dihapus)\n"
+
+
         return commitMessage
 
     def generateMessageFromPy(self,change,noFile,jenis):
         commitMessage = "\n" + str(noFile) + ". "+jenis+" File " + change[0] + "\n"
+        pprint(change)
         noLevel1 = 1
         #class yang ditambah
         for imported in change[1][2]:
@@ -123,7 +132,7 @@ class analyzeChange():
 
     def generateCommitMessage(self):
         dictionary = {
-            "Strcture" : "terdiri atas perubahan get dan set saja",
+            "Structure" : "terdiri atas perubahan get dan set saja",
             "State Access" : "secara umum diisi oleh perubahan method accessor",
             "State Update" : "secara umum diisi oleh perubahan method mutator",
             "Large" : "terdiri dari perubahan method get/set dan perubahan method lainnya",

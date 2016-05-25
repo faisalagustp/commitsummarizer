@@ -110,6 +110,8 @@ class analyzePyCodeChange():
             line = line.strip()
             onReplace = False
             if line.startswith("def") or line.startswith("class"):
+
+
                 if lineStatus=="-":
                     isReplacing=True
                 elif lineStatus=="+":
@@ -127,18 +129,19 @@ class analyzePyCodeChange():
                                 currentClass["name"] = line
                                 currentClass["status"] = "R"
 
-
                 if isChanging == True and onReplace == False:
-                    if isMethod and onClass:
-                        currentClass["methods"].append(currentMethod)
-                        currentMethod = self.cleanUp(True)
-                    elif isMethod and not onClass:
-                        savedMethods.append(currentMethod)
-                        currentMethod = self.cleanUp(True)
+                    if(currentMethod["plus"]>0 or currentMethod["minus"]>0):
+                        if isMethod and onClass:
+                            currentClass["methods"].append(currentMethod)
+                            currentMethod = self.cleanUp(True)
+                        elif isMethod and not onClass:
+                            savedMethods.append(currentMethod)
+                            currentMethod = self.cleanUp(True)
 
-                    if line.startswith("class") and onClass:
-                        savedClass.append(currentClass)
-                        currentClass = self.cleanUp(False)
+                    if currentClass["plus"]>0 or currentClass["minus"]>0 or len(currentClass["methods"])>0 :
+                        if line.startswith("class") and onClass:
+                            savedClass.append(currentClass)
+                            currentClass = self.cleanUp(False)
 
                 isChanging = False;
 
@@ -163,7 +166,7 @@ class analyzePyCodeChange():
                     }
                     savedImport.append(importing)
 
-            if len(line)<3:
+            if len(line)>3:
                 if lineStatus=="+":
                     if isMethod:
                         currentMethod["plus"] += 1
