@@ -12,6 +12,8 @@
         <title>Commit Summarization</title>
         <script>
         $(document).ready(function() {
+          $('.tabular.menu .item').tab();
+          
           $("#cardloading").hide();
           $('.commitnya.link').popup();
 
@@ -23,20 +25,17 @@
             $("#projectloading").html(usernamenya+"/"+projectnya);
             $("#cardloading").show("slow");
 
-            $.post("/import/",
-            {
-                username: usernamenya,
-                project: projectnya,
-                csrfmiddlewaretoken : csrf
-            },
-            function(data, status){
-              if(status=="success"){
-                if (data != "sukses"){
-                  $("#aldes").html("Gagal Mengakses Repository "+data);
-                  $('.small.modal').modal('show');
-                  $("#cardloading").hide("slow");
-                }else{
-                  $("#aldes").html("Repository berhasil ditambahkan");
+            $.ajax({
+                cache:false,
+                type:"POST",
+                url:"/import/",
+                data:{
+                    username: usernamenya,
+                    project: projectnya,
+                    csrfmiddlewaretoken : csrf
+                },
+                error:function(xhr, error){
+                  $("#aldes").html("Repository tidak dapat diakses: (XHR: "+xhr+", error message: "+error+") ");
                   $('.small.modal').modal({
                     closable  : false,
                     onDeny    : function(){
@@ -45,12 +44,30 @@
                     }
                   })
                   .modal('show');
+                },
+                success:function(data){
+                  if (data != "sukses"){
+                    $("#aldes").html(" Repository tidak dapat diakses " + data);
+                    $('.small.modal').modal({
+                      closable  : false,
+                      onDeny    : function(){
+                        location.reload();
+                        return false;
+                      }
+                    })
+                    .modal('show');
+                  }else{
+                    $("#aldes").html("Repository berhasil ditambahkan");
+                    $('.small.modal').modal({
+                      closable  : false,
+                      onDeny    : function(){
+                        location.reload();
+                        return false;
+                      }
+                    })
+                    .modal('show');
+                  }
                 }
-              }else{
-                $("#aldes").html("Cek Kembali Koneksi Anda, Repository tidak dapat diakses");
-                $('.small.modal').modal('show');
-                $("#cardloading").hide("slow");
-              }
             });
 
           });
@@ -83,7 +100,7 @@
          </div>
 
          <div class="ui small modal">
-           <div class="header">Peringatan</div>
+           <div class="header">Notifikasi</div>
            <div class="content">
                <div class="description" id="aldes">
              </div>

@@ -32,11 +32,12 @@
                 <i class="list icon"></i>
                 Available Repository
               </h4>
-              <div class="ui link cards">
+              <div class="ui link three cards">
                 {% for commit in commits %}
                 <div class="card">
                   <div class="content">
-                    <div class="header">{{ commit.nama_project }}</div>
+                    <i class="book icon right floated ui"></i>
+                    <a class="header" target="blank" href="/commit/?project={% autoescape on %}{{ commit.nama_project|safe }}{% endautoescape %}">{{ commit.nama_project }}</a>
                     <div class="meta">
                       <a>Github Repository</a>
                     </div>
@@ -45,7 +46,7 @@
                     </div>
                   </div>
                   <div class="extra content">
-                    <div class="ui buttons">
+                    <div class="ui fluid buttons">
                       <a class="ui blue button" target="blank" href="/commit/?project={% autoescape on %}{{ commit.nama_project|safe }}{% endautoescape %}"><i class="eye icon"></i>Summarize</a>
                       <div class="or"></div>
                       <a class="ui green button" target="blank" href="https://github.com/{{ commit.nama_project|safe }}"><i class="github icon"></i>In Github</a>

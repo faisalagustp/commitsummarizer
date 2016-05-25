@@ -162,7 +162,8 @@ class analyzeChange():
         for stereotype in self.commitStereotypes:
             commitMessage += dictionary[stereotype] + ". "
 
-        commitMessage+= " Detail kegiatan perubahan yang terjadi adalah sebagai berikut:"
+        if len(self.pyChange["added"]) + len(self.pyChange["removed"]) + len(self.pyChange["modified"]) + len(self.pyChange["renamed"]) > 0:
+            commitMessage+= "Detail perubahan yang terjadi adalah sebagai berikut:"
 
         #addition
         noFile = 1
@@ -237,7 +238,7 @@ class analyzeChange():
         if len(self.xmlChange["modified"]) != 0:
             commitMessage += "File XML yang dimodifikasi adalah " + ", ".join(self.xmlChange["modified"]) + ". "
 
-        commitMessage += (" Dan perubahan pada " + str(self.miscFiles) + "buah file.")   if self.miscFiles!= 0 else ""
+        commitMessage += ("Terdapat perubahan pada " + str(self.miscFiles) + " buah file yang tidak dikenali.")   if self.miscFiles!= 0 else ""
         return commitMessage
 
 
