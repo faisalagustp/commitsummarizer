@@ -10,6 +10,8 @@ from cosum.models import Commit, Files
 # Create your views here.
 def home_page(request):
     commits = Commit.objects.values('nama_project').distinct()
+    for commit in commits:
+        commit['jumlahCommit'] = Commit.objects.filter(nama_project=commit['nama_project']).count()
     return render(request, 'home.html',{'commits':commits})
 
 def import_page(request):
